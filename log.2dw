@@ -1,0 +1,43 @@
+
+Starting at: Mon Jun  2 13:55:08 2014
+
+Parameters: 1 0 0 -1 -0.02 -0.2 0 0 8 2 2 100 0 2 
+Constructing domain-wall statespace for N=8, NDW=2
+Ntotsectors: 8
+Sector 0 (0 0 0 ) #states:9 (00000000,64) (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) (11111111,64) 
+Sector 1 (1 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 2 (2 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 3 (3 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 4 (4 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 5 (5 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 6 (6 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Sector 7 (7 0 0 ) #states:7 (00000001,8) (00000011,8) (00000111,8) (00001111,8) (00011111,8) (00111111,8) (01111111,8) 
+Hashkey for these parameters is: 999767616
+Correlation function is <S^-(2)S^+(2)>
+Doing Full diagonalization
+Sample counter: 
+0 0
+1 0
+2 1
+3 0
+4 0
+5 0
+6 0
+7 0
+
+Doing sector: 2 counter: 0
+*** Constructing Hamiltonian for sector 2
+Starting construction on state: 0
+Done constructing the Hamiltonian for sector # 2
+
+*** Constructing Hamiltonian for sector 4
+Starting construction on state: 0
+Done constructing the Hamiltonian for sector # 4
+
+***Constructing Sx(2) operator for sector 2
+Starting construction on state 0
+Done constructing the Sx(2) for sector # 2
+ Time pr. iteration: 0
+Time elapsed:  0 sec. :0 hours.
+Ending at: Mon Jun  2 13:55:08 2014
+---Done--- 

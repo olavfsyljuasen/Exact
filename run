@@ -1,0 +1,8 @@
+#!/bin/sh
+
+make spotless
+make testx64
+cp sectorstosample.in sectorstosample
+cp randomseed.in randomseed
+
+./dw_lanczos_sxsx.exec

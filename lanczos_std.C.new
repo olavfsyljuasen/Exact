@@ -1,0 +1,370 @@
+//--------------------------------------------------------------
+// The Lanczos routine computes the Lanczos matrix 
+// Diagonalization of the Lanczosmatrix must be done separately
+// in the routine LanczosDiag
+//
+// This file contains the standard serial implementation of Lanczos
+//
+//
+//--------------------------------------------------------------
+
+#ifdef DEBUG
+const bool WTRACE=true;
+#else
+const bool WTRACE=false;
+#endif
+
+#ifdef DEBUG2
+const bool TRACE=true;
+#else
+const bool TRACE=false;
+#endif
+
+const double TINYNUMBER=1e-15;
+
+#ifdef DOREORTHOGONALIZATION
+const bool REORTHOGONALIZE=true;
+#else
+const bool REORTHOGONALIZE=false;
+#endif
+
+#include <iostream>
+#include <iomanip>
+
+
+
+#include "lanczos.h"
+#include "lanczos_std.h"
+
+#include "lowlevelroutines.h"
+#include "rnddef.h"
+#include "global.h"
+
+//Lanczos::Lanczos(MyMatrix& H_in,int M_in){impl = new Lanczos_impl(H_in,M_in);} // initializes Lanczos with random vector
+Lanczos::Lanczos(MyMatrix& H_in,int M_in,int basestatenr){impl = new Lanczos_impl(H_in,M_in,basestatenr);} // initializes Lanczos with a basestate 
+Lanczos::Lanczos(MyMatrix& H_in,int M_in, vector<MyField>& vec_in){impl = new Lanczos_impl(H_in,M_in,vec_in);}  // initializes Lanczos using the input vector
+Lanczos::~Lanczos(){delete impl;} 
+//Lanczos::~Lanczos(){impl->~Lanczos_impl();} 
+void Lanczos::DoLanczos(){impl->DoLanczos();}
+MyField* Lanczos::GetInitVector(){return impl->GetInitVector();}
+MyField* Lanczos::GetPhi(const int i){return impl->GetPhi(i);}
+void Lanczos::DiagonalizeLanczosMatrix(){impl->DiagonalizeLanczosMatrix();}
+vector<double>& Lanczos::GetLanczosa(){return impl->GetLanczosa();}
+vector<double>& Lanczos::GetLanczosb(){return impl->GetLanczosb();}  // we start numbering b from b0,b1 etc.
+vector<double>& Lanczos::GetEigenvalues(){return impl->GetEigenvalues();}
+double* Lanczos::GetEigenvector(const int i){return impl->GetEigenvector(i);}
+int Lanczos::GetNeigenvalues(){return impl->GetNeigenvalues();}
+int Lanczos::GetNLanczosIterations(){return impl->GetNLanczosIterations();}
+double Lanczos::GetNormofInitVector(){return impl->GetNormofInitVector();} 
+MyField* Lanczos::GetLanczosEigenvectorinStateSpaceBasis(const int n){return impl->GetLanczosEigenvectorinStateSpaceBasis(n);}
+
+
+// Here starts the implementation-specific details
+
+/*
+Lanczos_impl::Lanczos_impl(MyMatrix& H_in,int M_in):H(H_in),N(H.Ncols()),M(min(N,M_in)),Mstop(M),Niterations(0),phi(NULL),lanczos_a(M),lanczos_b(M-1),LM(0),initnorm(1.)
+  {
+    if(TRACE) cout << "Starting Lanczos, M=" << M << endl;
+    phi= new MyField[(M+1)*N]; // allocate space for Lanczos vectors
+    RandomInitialization();
+  }
+*/
+
+Lanczos_impl::Lanczos_impl(MyMatrix& H_in,int M_in,int basestatenr):H(H_in),N(H.Ncols()),M(min(N,M_in)),Mstop(M),Niterations(0),phi(NULL),lanczos_a(M),lanczos_b(M-1),LM(0),initnorm(1.)
+  {
+    if(TRACE) cout << "Starting Lanczos, M=" << M << " with base state" << basestatenr << endl;
+    phi= new MyField[(M+1)*N]; // allocate space for Lanczos vectors
+    for(int i=0; i<(M+1)*N; i++){ phi[i]=MyField(0.,0.); } // may be superfluous 
+
+    MyField* phi0=&phi[0];
+
+    if(basestatenr >=0 && basestatenr < N)
+      {
+	if(TRACE) cout << "Setting base state: " << basestatenr << endl;
+	phi0[basestatenr]=complex<double>(1.,0.); // initialize the vector
+      }
+    else
+      {     // Choose a random basestate if basestatenr is above the #of states
+	RandomInitialization(); // pick a random state
+
+	if(TRACE)
+	  {
+	    cout << "phi[0]:" << endl;
+	    for(int i=0; i<N; i++) cout << phi0[i] << endl;
+	  }
+	
+      }
+
+    Normalize(&N,phi0); // normalizate the random vector
+	
+    if(TRACE)
+      {
+	cout << "phi[0]:" << endl;
+	for(int i=0; i<N; i++) cout << setprecision(PRECISION) << phi0[i] << endl;
+      }
+
+    if(TRACE) 
+      {
+	cout << "the matrix is: " << H << endl;
+      }
+  }
+
+Lanczos_impl::Lanczos_impl(MyMatrix& H_in,int M_in, vector<MyField>& vec_in):H(H_in),N(H.Ncols()),M(min(N,M_in)),Mstop(M),Niterations(0),phi(NULL),lanczos_a(M),lanczos_b(M-1),LM(0),initnorm(1.)
+  {
+    if(TRACE) cout << "Starting Lanczos with initial vector, M=" << M << endl;
+    phi= new MyField[(M+1)*N]; // allocate space for Lanczos vectors
+    for(int i=0; i<(M+1)*N; i++){ phi[i]=MyField(0.,0.); } // may be superfluous 
+
+    MyField* phi0=&phi[0];
+
+    for(int i=0; i<N; i++) phi0[i]=vec_in[i]; // initialize the vector
+
+    initnorm=Normalize(&N,phi0); // record the normalization of the init vector
+    if(TRACE) cout << "Init norm is: " << initnorm << endl;
+    if(abs(initnorm) < TINYNUMBER){Mstop=0; Niterations=0;} // in case the starting vector is the zero vector
+  }
+
+Lanczos_impl::~Lanczos_impl()
+{
+  if(TRACE) cout << "Destroying class Lanczos" << endl;
+  delete[] phi;
+  delete LM;
+}
+
+void Lanczos_impl::DoLanczos()
+{
+  int m=0;
+  bool continueiteration=true;
+  while(continueiteration && m<Mstop){
+    if(TRACE) cout << "Doing Lanczos step m:" << m << " M: " << M << endl;
+    continueiteration=LanczosIteration(m++);
+  } 
+  Niterations=m; // gives the number of lanczos vectors
+  if(TRACE){
+    cout << "There are in all " << Niterations << " orthogonal Lanczos vectors" << endl;
+    if(Niterations >0)
+      {
+	for(int i=0; i<Niterations-1; i++){
+	  cout << "a[" << i << "]=" << lanczos_a[i] << " b[" << i << "]="<< lanczos_b[i] << endl;}
+	cout << "a[" << Niterations-1 << "]=" << lanczos_a[Niterations-1] << endl;
+      }
+  }
+}
+
+/*
+void Lanczos_impl::ConstructGamma1(MyField* v1,MyField* v0,double& a0)
+  {
+    double nega0=-a0;
+    AddToVector(&N,v1,v0,&nega0); // v1 = v1 -a0*v0;
+  }
+
+void Lanczos_impl::ConstructGammam(MyField* v_mp1,MyField* v_m,MyField* v_mm1,double& am,double& bmm1)
+  {
+    // computes v_mp1 -> v_mp1-am*v_m-bmm1*v_mm1
+    
+    MyField negam=-am;
+    AddToVector(&N,v_mp1,v_m,&negam); // v_mp1=v_mp1 - am*v_m;
+    MyField negbmm1=-bmm1;
+    AddToVector(&N,v_mp1,v_mm1,&negbmm1); // v_mp1=v_mp1 - bmm1*v_mm1;
+  }
+*/
+
+void Lanczos_impl::RandomInitialization()
+  {
+    if(WTRACE) cout << "In RandomInitialization" << endl;
+    MyField* phi0=&phi[0];
+    for(int i=0; i<N; i++)
+      {
+	double r_real=2.*RAN.Get()-1.;
+	double r_imag=2.*RAN.Get()-1.;
+
+	MyField r=MyField(r_real,r_imag); // random start
+
+	phi0[i]=r;
+      }
+  }
+
+/*
+void Lanczos_impl::Reorthogonalize(const int m)
+  {
+    if(WTRACE) cout << "In Reorthogonalize" << endl;
+    MyField* phim=&phi[m*N];
+    for(int i=0; i<m; i++)
+      {
+	MyField* phii=&phi[i*N];
+	MyField q=ScalarProduct(&N,phim,phii);
+	MyField q0=1./(1.-q*q);
+	MyField q1=q0*q;
+	MyField negq1=-q1;  
+	if(TRACE) 
+	  {
+	    cout << "m:" << m << endl;
+	    cout << "q  =" << setprecision(PRECISION) << q << endl;
+	    cout << "q0 =" << setprecision(PRECISION) << q0 <<endl;
+	    cout << "-q1=" << setprecision(PRECISION) << negq1 << endl;
+	  }
+	ScaleVector(&N,phim,&q0); // vm = q0*vm;
+	AddToVector(&N,phim,phii,&negq1); // vm = vm -q1*vi;
+      }
+  }
+*/
+
+void Lanczos_impl::Reorthogonalize(int N,MyField* z,const int m)
+  {
+    if(WTRACE) cout << "In Reorthogonalize" << endl;
+    for(int i=0; i<m; i++)
+      {
+	MyField* phii=&phi[i*N];
+	MyField negq=-ScalarProduct(&N,z,phii); // q=<z|phi_i>
+	AddToVector(&N,z,phii,&negq); // |z> = |z> -q*|phi_i>;
+      }
+    if(TRACE) cout << "Done Reorthogonalize" << endl;
+  }
+
+
+bool Lanczos_impl::LanczosIteration(const int m)
+  {
+    if(TRACE)  cout << "Starting Lanczos iteration " << m << endl;
+    Niterations++;
+
+    MyField* phim=&phi[m*N]; //already normalized
+    MyField* z=&phi[(m+1)*N];
+
+    H.TimesVector(z,phim);    // |z> = H |phi_m>
+
+    if(TRACE) 
+      {
+	cout << "H * phi[" << m << "]" << endl;
+	for(int i=0; i<N; i++){cout << setprecision(PRECISION) << z[i] << endl;}
+      }
+
+    lanczos_a[m]=ScalarProduct(&N,phim,z).real(); // a_m=<phi_m|z>
+    if(TRACE) cout << "lanczos_a[" << m << "=" << lanczos_a[m] << endl;
+
+#ifdef DOREORTHOGONALIZE
+    Reorthogonalize(N,z,m);
+    Reorthogonalize(N,z,m); // do it twice for better accuracy
+#else
+    MyField negam=-lanczos_a[m];
+    AddToVector(&N,z,phim,&negam); // |z> =|z> - a_m*|phi_m>;
+
+    if(m>0)
+      {
+	MyField negbmm1=-lanczos_b[m-1];
+	MyField* phimm1=&phi[(m-1)*N];
+	AddToVector(&N,z,phimm1,&negbmm1); // |z> =|z> - b_(m-1)*|phi_(m-1)>;
+      }
+#endif
+
+    double beta=GetNorm(&N,z);
+
+    if(m == M-1) // end of lanczos procedure
+      {
+	if(TRACE) cout << "Truncating the Lanczos procedure, reached max matrix size, lanczos_b[M-1]= " << beta << " --> 0" << endl;
+	return false;
+      } 
+
+    lanczos_b[m]=beta;
+    if(TRACE) cout << "lanczos_b[" << m << "=" << lanczos_b[m] << endl;
+
+    if(abs(lanczos_b[m])<=TINYNUMBER){return false;} // stop the Lanczos procedure; 
+
+    double factor=1./beta;
+    ScaleVector(&N,z,&factor); 
+
+    if(TRACE){ 
+      cout << "Lanczos vector phi[" << m+1 << "]: " << endl;
+      for(int i=0; i<N; i++){cout << setprecision(PRECISION) << z[i] << endl;}
+    }
+    return true;
+  }
+
+
+
+    /*
+    if(m==0)
+      { // first element
+	MyField* phi0=&phi[0]; //already normalized
+	MyField* phi1=&phi[1*N];
+	//	v1=H*v0;
+	H.TimesVector(phi1,phi0);
+	if(TRACE) 
+	  {
+	    cout << "phi1:" << endl;
+	    for(int i=0; i<N; i++){cout << setprecision(PRECISION) << phi1[i] << endl;}
+	  }
+	lanczos_a[0]=ScalarProduct(&N,phi0,phi1).real();
+	if(TRACE) cout << "lanczos_a[0]=" << lanczos_a[0] << endl;
+
+	if(M>1) // if not the last element
+	  {
+	    ConstructGamma1(phi1,phi0,lanczos_a[0]);
+	    if(REORTHOGONALIZE) Reorthogonalize(1);
+	    lanczos_b[0]=Normalize(&N,phi1);
+	    if(TRACE) cout << "lanczos_b[0]=" << lanczos_b[0] << endl;
+	  }
+      }
+    else
+      {
+	MyField* phi_mm1=&phi[(m-1)*N]; //already normalized
+	MyField* phi_m  =&phi[m*N  ]; //already normalized
+	MyField* phi_mp1=&phi[(m+1)*N];
+
+	//	v_mp1=H*v_m;
+	H.TimesVector(phi_mp1,phi_m);
+	lanczos_a[m]=ScalarProduct(&N,phi_m,phi_mp1).real();
+	if(TRACE) cout << "lanczos_a[" << m << "]=" << lanczos_a[m] << endl;
+
+	if(m < M-1) // not last element
+	  {
+	    ConstructGammam(phi_mp1,phi_m,phi_mm1,lanczos_a[m],lanczos_b[m-1]);	    
+	    if(REORTHOGONALIZE) Reorthogonalize(m+1);
+	    lanczos_b[m]=Normalize(&N,phi_mp1);
+	    if(TRACE) cout << "lanczos_b[" << m << "]=" << lanczos_b[m] << endl; 
+	  }
+      }
+    
+
+    if(TRACE){ 
+      cout << "Lanczos vector after iteration #: " << m << endl;
+      MyField* v=&phi[m*N];
+      for(int i=0; i<N; i++){cout << setprecision(PRECISION) << v[i] << endl;}
+
+      cout << "a[" << m << "]=" << setprecision(PRECISION) << lanczos_a[m];
+      if(m<M-1) cout << " b[" << m << "]=" << setprecision(PRECISION) << lanczos_b[m];
+      cout << endl;
+    }
+
+   
+    if(m<M-1 && abs(lanczos_b[m])<=TINYNUMBER){return false;} // stop the Lanczos procedure; 
+    return true;
+  }
+*/
+
+void Lanczos_impl::DiagonalizeLanczosMatrix()
+{
+  if(Niterations==0) return;
+  delete LM;
+  LM = new LanczosMatrix(Niterations,lanczos_a,lanczos_b);
+  LM->Diagonalize();
+}
+
+MyField* Lanczos_impl::GetLanczosEigenvectorinStateSpaceBasis(const int n)
+{
+  MyField* phiM=&phi[M*N]; // the last one is used as storage
+  double* nu=LM->Eigenvector(n);
+
+  for(int i=0; i<N; i++){ phiM[i]=0;} // initialize to zero.
+  for(int p=0; p<Niterations; p++)
+    {
+      MyField* phip=&phi[p*N];
+      AddToVector(&N,phiM,phip,&nu[p]);	 
+    }
+  return phiM;
+}
+
+
+
+
+
+

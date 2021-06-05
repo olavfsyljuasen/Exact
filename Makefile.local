@@ -1,0 +1,33 @@
+DATADIR = /scratch/sylju
+HOMEDIR = /mn/felt/u20/sylju
+#INCDIR = -I$(DATADIR)/include -I$(HOMEDIR)/include -I/usr/include -I$(DATADIR) 
+INCDIR = -I$(DATADIR) -I$(DATADIR)/lapack-3.5.0/lapacke/include -I$(HOMEDIR)/include -I$(DATADIR)/include
+#LIBDIR = -L$(DATADIR)/lib     -L$(HOMEDIR)/lib     -L/usr/lib -L$(DATADIR)/OpenBLAS 
+LIBDIR = -L$(DATADIR)/lib 
+#LIBS   = -lfftw3 -lm -lrand -lstdc++ -lrecipes_cpp -lgsl -lgslcblas 
+#LIBS   = -lfftw3 -lm -lrand -lstdc++ -lrecipes_cpp -lhypergeometric -lgfortran
+#LIBS   = -lfftw3 -lm -lrand -lstdc++
+
+LIBS = -llapacke -lopenblas -lpthread -lqd 
+#LIBS = 
+# C++ compiler
+#CCC=g++
+CCC= icpc
+#CCC= pgCC 
+#CCOPTS=  -O2 -DOPENBLAS -DLAPACKE 
+CCOPTS=  -O2 -fp-model strict -DOPENBLAS -DLAPACKE 
+#CCOPTS= -O0 -g 
+#CCOPTS= -O2
+#CCOPTS= -O -g
+#CCOPTS= -O3 -DNDEBUG -mcpu=pentium -funroll-loops -felide-constructors -pg
+#CCOPTS= -O3 -mcpu=pentium -funroll-loops -felide-constructors 
+#CCOPTS= -O3 -DNDEBUG -Wno-deprecated
+#CCOPTS= -O3 -Wno-deprecated -pg
+# Cuda compiler
+CUDACC= nvcc
+# Cuda options
+#CUDACCOPTS=	
+
+#LINKOPTS = -O3 -static
+LINKOPTS = -O2
+CCFLAGS = $(CCOPTS) $(INCDIR) 
