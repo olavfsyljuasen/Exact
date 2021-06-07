@@ -23,14 +23,17 @@ SYSTEM=GNUmakefile makefile Makefile.x64 Makefile.abel
 
 GLOBALFLAGS = -DELLMATRIX -DSTOREDATAASDOUBLE -DDEBUGPRECISION=16 -DDOUBLEDOUBLE
 
-
-
-
 %.run  : %.exec
 	./$<
 
 %.exec : %.o 
 	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
+	@echo $*.`git describe`$(EXTENSION)
+	mv $*.exec $(BINDIR)/$*.`git describe`$(EXTENSION)
+
+
+#%.exec : %.o 
+#	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
 
 myprog.exec : $(MYPROGOBJECTS) 
 	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
@@ -189,16 +192,22 @@ TESTFX_OBJECTS = dwalls_full_corr_sxsx.o  sparsematrix.o observables_std_full_co
 
 dw_exact_sxsx.exec : $(TESTFX_OBJECTS) 
 	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
+	@echo dw_exact_sxsx.`git describe`$(EXTENSION)
+	mv dw_exact_sxsx.exec $(BINDIR)/dw_exact_sxsx.`git describe`$(EXTENSION)
 
 TESTFY_OBJECTS = dwalls_full_corr_sysy.o  sparsematrix.o observables_std_full_corr.o inttostring.o lowlevelroutines.o operator.o banddiag.o fulldiagonalization.o observablesspec.o
 
 dw_exact_sysy.exec : $(TESTFY_OBJECTS) 
 	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
+	@echo dw_exact_sysy.`git describe`$(EXTENSION)
+	mv dw_exact_sysy.exec $(BINDIR)/dw_exact_sysy.`git describe`$(EXTENSION)
 
 TESTFZ_OBJECTS = dwalls_full_corr_szsz.o  sparsematrix.o observables_std_full_corr.o inttostring.o lowlevelroutines.o operator.o banddiag.o fulldiagonalization.o observablesspec.o
 
 dw_exact_szsz.exec : $(TESTFZ_OBJECTS) 
 	$(CCC) $(LINKOPTS) -o $@ $^ $(LIBDIR) $(LIBS)
+	@echo dw_exact_szsz.`git describe`$(EXTENSION)
+	mv dw_exact_szsz.exec $(BINDIR)/dw_exact_szsz.`git describe`$(EXTENSION)
 
 TESTFX1_OBJECTS = dwalls_full_corr_sxsx.o  sparsematrix.o observables_std_full_corr_oneT.o inttostring.o lowlevelroutines.o operator.o banddiag.o fulldiagonalization.o  observablesspec.o
 

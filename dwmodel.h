@@ -224,8 +224,16 @@ par(par_in),hashkey(int2string(myhash(par,12*sizeof(double)))),
 
 #ifdef CORRELATIONFUNCTION
   cfptr = new CorrelationFunctionObservable(Aop,"corr.dat");
-  logfile << "Correlation function is <S^-(" << static_cast<int>(par[Q]) 
-  	  << ")S^+(" << static_cast<int>(par[Q]) << ")>" << endl;
+  logfile << "Correlation function is " <<
+#ifdef SXSX    
+    "S^x(" << static_cast<int>(par[Q]) << ")S^x(" << static_cast<int>(par[Q]) << ")>" << endl;
+#elif defined SYSY
+    "S^y(" << static_cast<int>(par[Q]) << ")S^y(" << static_cast<int>(par[Q]) << ")>" << endl;
+#elif defined SXSX
+    "S^z(" << static_cast<int>(par[Q]) << ")S^z(" << static_cast<int>(par[Q]) << ")>" << endl;
+#else
+    "S^-(" << static_cast<int>(par[Q]) << ")S^+(" << static_cast<int>(par[Q]) << ")>" << endl;
+#endif
 #endif
 
   if(TRACE) cout << "Done with constructing DWmodel" << endl;

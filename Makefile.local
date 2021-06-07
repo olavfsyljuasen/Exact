@@ -7,15 +7,18 @@ LIBDIR = -L$(DATADIR)/lib
 #LIBS   = -lfftw3 -lm -lrand -lstdc++ -lrecipes_cpp -lgsl -lgslcblas 
 #LIBS   = -lfftw3 -lm -lrand -lstdc++ -lrecipes_cpp -lhypergeometric -lgfortran
 #LIBS   = -lfftw3 -lm -lrand -lstdc++
-
 LIBS = -llapacke -lopenblas -lpthread -lqd 
-#LIBS = 
+
+BINDIR = $(DATADIR)/bin
+EXTENSION = _x64.x
+
+
 # C++ compiler
 #CCC=g++
 CCC= icpc
 #CCC= pgCC 
 #CCOPTS=  -O2 -DOPENBLAS -DLAPACKE 
-CCOPTS=  -O2 -fp-model strict -DOPENBLAS -DLAPACKE 
+CCOPTS=  -O2 -fp-model strict -DOPENBLAS -DLAPACKE
 #CCOPTS= -O0 -g 
 #CCOPTS= -O2
 #CCOPTS= -O -g
