@@ -3,19 +3,25 @@ HOMEDIR = $(HOME)
 SOURCEDIR= $(HOME)/Sources/Exact/Source
 #INCDIR = -I$(HOMEDIR)/include -I$(SOURCEDIR)/include  -I$(MKLROOT)/include -I$(MKLROOT)/include/fftw -I$(LD_LIBRARY_PATH)
 INCDIR = -I$(HOMEDIR)/include -I$(SOURCEDIR)/include  -I$(MKLROOT)/include 
-CUDAINCDIR = -I$(CUDA)/include -I$(HOMEDIR)/include -I$(SOURCEDIR)/include -I$(HOMEDIR)/include/gqd_1_2/inc -I$(CUDA)/NVIDIA_CUDA-5.0_Samples/common/inc
+##CUDAINCDIR = -I$(CUDA)/include -I$(HOMEDIR)/include -I$(SOURCEDIR)/include -I$(HOMEDIR)/include/gqd_1_2/inc -I$(CUDA)/NVIDIA_CUDA-5.0_Samples/common/inc
 #CUDAINCDIR = -I$(CUDA)/include -I$(HOMEDIR)/include -I$(SOURCEDIR)/include
 #LIBDIR = -L$(HOMEDIR)/lib     -L$(SOURCEDIR)/lib  -L$(MKLROOT)/interfaces/fftw3xc -L$(MKLROOT)/lib/intel64 -L$(LD_LIBRARY_PATH) 
 LIBDIR = -L$(HOMEDIR)/lib     -L$(SOURCEDIR)/lib  -L$(MKLROOT)/lib/intel64 
-CUDALIBDIR = -L$(CUDA)/lib64
+##CUDALIBDIR = -L$(CUDA)/lib64
+
+BINDIR = $(DATADIR)/bin
+EXTENSION = _saga.x
+
 #LIBS   = -lfftw3xc_intel -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -lstdc++ -lrecipes_cpp -lhypergeometric -lgfortran
 #LIBS   = -lfftw3xc_intel -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -lstdc++ -lrecipes_cpp -lhypergeometric -lgfortran
 #LIBS   = -lmkl_intel_thread -lmkl_core -liomp5 -lpthread 
-LIBS   = -lmkl_intel_lp64  -lmkl_core -lmkl_sequential  -lpthread -lqd
-CUDALIBS =  -lcublas -lcudart
+##LIBS   = -lmkl_intel_lp64  -lmkl_core -lmkl_sequential  -lpthread -lqd
+LIBS   = -lmkl_intel_lp64  -lmkl_core -lmkl_sequential  -lpthread
+##CUDALIBS =  -lcublas -lcudart
 #LIBS   = -lmkl_intel_lp64  -lmkl_core -liomp5 -lpthread 
 # C++ compiler
-CCC= $(CXX)
+#CCC= $(CXX)
+CCC= icpc
 #CCOPTS=  -O -DNDEBUG
 CCOPTS= $(CFLAGS) -fp-model strict -mkl -DMKL_BLAS -DMKL_LAPACKE 
 #CCOPTS= -xAVX -mavx  -mkl -DMKL_BLAS -DMKL_LAPACKE -O1 -g 
@@ -26,12 +32,12 @@ CCOPTS= $(CFLAGS) -fp-model strict -mkl -DMKL_BLAS -DMKL_LAPACKE
 #CCOPTS= -O3 -DNDEBUG -Wno-deprecated
 #CCOPTS= -O3 -Wno-deprecated -pg
 # Cuda compiler
-CUDACC= nvcc
+##CUDACC= nvcc
 # Cuda options
 #CUDAOPTS= -arch=sm_30 -O2 --fmad=false -G -g
-CUDAOPTS= -arch=sm_30 -O2 -G -g
+##CUDAOPTS= -arch=sm_30 -O2 -G -g
 #CUDAOPTS= -arch=sm_30 -O2
-CUDAFLAGS = $(CUDAOPTS) $(CUDAINCDIR) 
+##CUDAFLAGS = $(CUDAOPTS) $(CUDAINCDIR) 
 
 #LINKOPTS = -O3 -static
 LINKOPTS =  -O2 

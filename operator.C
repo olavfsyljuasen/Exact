@@ -85,7 +85,7 @@ bool Operator::Exists(const int i)
 {
   string filename=name+"_"+int2string(i)+extension;
   ifstream ifile(filename.c_str());
-  return ifile;
+  return (ifile ? true : false);
 }
 
 #endif /* OPERATOR_C */
