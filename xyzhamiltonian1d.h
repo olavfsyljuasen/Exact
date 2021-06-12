@@ -14,7 +14,7 @@ using namespace std;
 class XYZhamiltonian1d: public Operator
 {
 public:
-  XYZhamiltonian1d(string name_in,double Jx_in,double Jy_in,double Jz_in,double hx_in,double hz_in,double Jz2_in, double C_in,StateSpace& statespace_in);
+  XYZhamiltonian1d(string name_in,double Jx_in,double Jy_in,double Jz_in,double J2x_in, double J2y_in, double J2z_in, double hx_in,double hz_in, double C_in,StateSpace& statespace_in);
   void GenerateSector(const int i);
 private:
   string name;
@@ -23,17 +23,17 @@ private:
   const double Jx;
   const double Jy;
   const double Jz;
+  const double J2x;
+  const double J2y;
+  const double J2z;
   const double hx;
   const double hz;
-  const double Jz2;
   const double C;
 
 };
 
-XYZhamiltonian1d::XYZhamiltonian1d(string name_in,double Jx_in,double Jy_in,double Jz_in,double hx_in,double hz_in,double Jz2_in,double C_in,StateSpace& statespace_in):
-name(name_in),statespace(statespace_in),N(statespace_in.GetN()),
-  Jx(Jx_in),Jy(Jy_in),Jz(Jz_in),hx(hx_in),hz(hz_in),Jz2(Jz2_in),C(C_in),
-  Operator(name_in,statespace_in.Nsectors())
+XYZhamiltonian1d::XYZhamiltonian1d(string name_in, double Jx_in, double Jy_in, double Jz_in, double J2x_in, double J2y_in, double J2z_in, double hx_in,double hz_in,double C_in,StateSpace& statespace_in): name(name_in),statespace(statespace_in),N(statespace_in.GetN()),
+  Jx(Jx_in),Jy(Jy_in),Jz(Jz_in),J2x(J2x_in),J2y(J2y_in),J2z(J2z_in),hx(hx_in),hz(hz_in),C(C_in),Operator(name_in,statespace_in.Nsectors())
 {
   if(WTRACE){ cout << "Starting XYZhamiltonian1d" << endl;}
   
@@ -109,10 +109,10 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 	  int r1=(r+1)%N;
 	  int r2=(r+2)%N;
 	  
-	  if(TRACE) cout << "r0=" << r0 << " r1=" << r1 << endl;
+	  if(TRACE) cout << "r0=" << r0 << " r1=" << r1 << " r2=" << r2 << endl;
 	  
 	  
-	  // S+S-
+	  // S+S-  NN
 	  news = statespace.Spluss(statespace.Sminus(s,r0),r1);
 	  newr = statespace.GetRefState(news,ri);
 	  j    = sec.FindIndx(newr);
@@ -127,7 +127,8 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
 	      }
 	    }
-	  // S-S+
+
+	  // S-S+ NN
 	  news = statespace.Sminus(statespace.Spluss(s,r0),r1);
 	  newr = statespace.GetRefState(news,ri);
 	  j    = sec.FindIndx(newr);
@@ -143,7 +144,7 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 	      }  
 	    }
 	  
-	  // S+S+
+	  // S+S+ NN
 	  news = statespace.Spluss(statespace.Spluss(s,r0),r1);
 	  newr = statespace.GetRefState(news,ri);
 	  j    = sec.FindIndx(newr);
@@ -159,7 +160,7 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
 	      }
 	    }
-	  // S-S-
+	  // S-S- NN
 	  news = statespace.Sminus(statespace.Sminus(s,r0),r1);
 	  newr = statespace.GetRefState(news,ri);
 	  j    = sec.FindIndx(newr);
@@ -175,7 +176,7 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 	      }
 	    }
 	  
-	  // SzSz
+	  // SzSz NN
 	  H.AddTo(i,i,Jz*statespace.Sz(s,r0)*statespace.Sz(s,r1));
 	  
 	  if(TRACE){
@@ -183,6 +184,84 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 		 << " newr: " << bitstring(s,N) << endl;
 	    cout << "H(" << i << "," << i << ")=" << H(i,i) << endl;
 	  }
+
+
+
+
+	  // S+S-  NNN
+	  news = statespace.Spluss(statespace.Sminus(s,r0),r2);
+	  newr = statespace.GetRefState(news,ri);
+	  j    = sec.FindIndx(newr);
+	  if(j<Nstates)
+	    {
+	      jn   = sec.state[j].norm;
+	      H.AddTo(j,i,g[ri]*sqrt(jn/in)*(J2x+J2y)/4.);
+	      if(TRACE){
+		cout << "S+S-: news: " << bitstring(news,N) << " newr: " << bitstring(newr,N) 
+		     << " j:" << j << " jn:" << jn << " ri: " << ri 
+		     << " g[ri]=" << g[ri] << endl;
+		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
+	      }
+	    }
+
+	  // S-S+ NNN
+	  news = statespace.Sminus(statespace.Spluss(s,r0),r2);
+	  newr = statespace.GetRefState(news,ri);
+	  j    = sec.FindIndx(newr);
+	  if(j<Nstates)
+	    {
+	      jn   = sec.state[j].norm; 
+	      H.AddTo(j,i,g[ri]*sqrt(jn/in)*(J2x+J2y)/4.);
+	      if(TRACE){
+		cout << "S-S+: news: " << bitstring(news,N) << " newr: " << bitstring(newr,N) 
+		     << " j:" << j << " jn:" << jn << " ri: " << ri 
+		     << " g[ri]=" << g[ri] << endl;
+		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
+	      }  
+	    }
+	  
+	  // S+S+ NNN
+	  news = statespace.Spluss(statespace.Spluss(s,r0),r2);
+	  newr = statespace.GetRefState(news,ri);
+	  j    = sec.FindIndx(newr);
+	  if(j<Nstates)
+	    {
+	      jn   = sec.state[j].norm; 
+	      H.AddTo(j,i,g[ri]*sqrt(jn/in)*(J2x-J2y)/4.);
+	      
+	      if(TRACE){
+		cout << "S+S+: news: " << bitstring(news,N) << " newr: " << bitstring(newr,N) 
+		     << " j:" << j << " jn:" << jn << " ri: " << ri 
+		     << " g[ri]=" << g[ri] << endl;
+		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
+	      }
+	    }
+
+	  // S-S- NNN
+	  news = statespace.Sminus(statespace.Sminus(s,r0),r2);
+	  newr = statespace.GetRefState(news,ri);
+	  j    = sec.FindIndx(newr);
+	  if(j<Nstates)
+	    {
+	      jn   = sec.state[j].norm; 
+	      H.AddTo(j,i,g[ri]*sqrt(jn/in)*(J2x-J2y)/4.);
+	      if(TRACE){
+		cout << "S-S-: news: " << bitstring(news,N) << " newr: " << bitstring(newr,N) 
+		     << " j:" << j << " jn:" << jn << " ri: " << ri 
+		     << " g[ri]=" << g[ri] << endl;
+		cout << "H(" << j << "," << i << ")=" << H(j,i) << endl;
+	      }
+	    }
+	  
+	  // SzSz NNN
+	  H.AddTo(i,i,J2z*statespace.Sz(s,r0)*statespace.Sz(s,r2));
+	  
+	  if(TRACE){
+	    cout << "SzSz: news: " << bitstring(s,N) 
+		 << " newr: " << bitstring(s,N) << endl;
+	    cout << "H(" << i << "," << i << ")=" << H(i,i) << endl;
+	  }
+
 	  
 	  
 	  // S+
@@ -226,6 +305,7 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 	    cout << "H(" << i << "," << i << ")=" << H(i,i) << endl;
 	  }
 
+	  /*
 	  // Sb next-nearest neighbor
 	  H.AddTo(i,i,Jz2*statespace.Sz(s,r0)*statespace.Sz(s,r2));
 	  
@@ -234,7 +314,7 @@ void XYZhamiltonian1d::GenerateSector(const int is1)
 		 << " newr: " << bitstring(s,N) << endl;
 	    cout << "H(" << i << "," << i << ")=" << H(i,i) << endl;
 	  }
-
+	  */
 	  
 	  // Constant
 	  H.AddTo(i,i,C);

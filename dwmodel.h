@@ -5,8 +5,8 @@ using namespace std;
 
 //const bool TRACE=false;
 
-enum parameterlist{LINEID,JX,JY,JZ,HX,HZ,JZ2,C,NSITES,NDW,Q,SECTOR,MLANCZOS,SAMPLEFRAC,BETA,ESUB,NWBINS,WMIN,WMAX,SIGMA};
-const int NPARAMS=20;
+enum parameterlist{LINEID,JX,JY,JZ,J2X,J2Y,J2Z,HX,HZ,C,NSITES,NDW,Q,SECTOR,MLANCZOS,SAMPLEFRAC,BETA,ESUB,NWBINS,WMIN,WMAX,SIGMA};
+const int NPARAMS=22;
 
 #include "inttostring.h"
 #include "observables.h"
@@ -111,7 +111,7 @@ class DWmodel
 DWmodel::DWmodel(double* par_in):
 par(par_in),hashkey(int2string(myhash(par,12*sizeof(double)))),
   N(par[NSITES]),myspace(N,par[NDW]),Nsec(myspace.Nsectors()),
-  Hop("op_H"+hashkey,par[JX],par[JY],par[JZ],par[HX],par[HZ],par[JZ2],par[C],myspace),
+  Hop("op_H"+hashkey,par[JX],par[JY],par[JZ],par[J2X],par[J2Y],par[J2Z],par[HX],par[HZ],par[C],myspace),
   Aop("op_Sx"+int2string(static_cast<int>(par[Q]))+"_"+hashkey,static_cast<int>(par[Q]),myspace),
   Szop("op_Sz"+int2string(static_cast<int>(par[Q]))+"_"+hashkey,static_cast<int>(par[Q]),myspace)
 #ifdef CALCULATE_PROJECTIONOPS
